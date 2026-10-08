@@ -1,5 +1,9 @@
 # Endringslogg
 
+## Ikke utgitt
+
+- Fjernet Stedskart-boksen. Resultatene vises i full bredde, med manuelt stedsvalg under GPS-knappen.
+
 ## 0.1.0 – 2026-10-08
 
 - Første PWA med GPS og manuelt koordinatoppslag.
