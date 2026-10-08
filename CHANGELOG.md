@@ -2,6 +2,9 @@
 
 ## Ikke utgitt
 
+- Nye oppsummeringer nederst for natur/vern og kulturminner, gruppert ved punktet, innen 100 m og mellom 100 m og 1 km.
+- Interaktivt kart nederst med Kartverkets bakgrunnskart, eiendomsgrenser, naturreservater, øvrige verneområder og naturtyper. Lokal Leaflet 1.9.4, avstandsringer og retur til valgt posisjon.
+
 - Fjernet Stedskart-boksen. Resultatene vises i full bredde, med manuelt stedsvalg under GPS-knappen.
 
 ## 0.1.0 – 2026-10-08
