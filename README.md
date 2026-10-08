@@ -4,6 +4,7 @@ Første PWA-versjon for iPhone. Åpne den publiserte HTTPS-adressen i Safari, og
 
 ## Funksjoner
 
+- Adressevalg med gate, nummer/bokstav, postnummer og poststed i Norge. Ett treff åpnes direkte; flere treff kan velges og hentes sidevis fra Kartverkets adresseregister.
 - GPS ved aktiv knappetrykk, eller manuelt koordinatpunkt. Ingen bakgrunnssporing.
 - Nærmeste adresse merkes som nærmeste adresse, ikke som en bekreftet adresse for eiendommen ved punktet.
 - Kommune og fylke slås opp direkte fra punktet.

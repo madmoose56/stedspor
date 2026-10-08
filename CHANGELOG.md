@@ -2,6 +2,9 @@
 
 ## Ikke utgitt
 
+- Ny overskrift: Sted info. Adressevalg til venstre og Min posisjon til høyre.
+- Norske adressesøk med gate, husnummer/bokstav, postnummer og poststed fra Kartverket. Valgt adresse bruker eksisterende stedsoppslag og kart.
+
 - Økt små tekststørrelser og underoverskrifter, med relativ skriftstørrelse, større trykkflater og fleksibel tekstbryting på mobil.
 
 - Valgt avstandsring fyller tilgjengelig kartutsnitt med liten kant. En kompakt knapp bytter mellom 100 m og 1 km. Alle nye posisjonsoppslag starter på 100 m.
