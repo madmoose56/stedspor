@@ -1,0 +1,8 @@
+const R=6371008.8,rad=Math.PI/180;
+export function haversine(a,b){const dlat=(b[1]-a[1])*rad,dlon=(b[0]-a[0])*rad;const h=Math.sin(dlat/2)**2+Math.cos(a[1]*rad)*Math.cos(b[1]*rad)*Math.sin(dlon/2)**2;return 2*R*Math.asin(Math.min(1,Math.sqrt(h)));}
+function inRing(p,ring){let inside=false;for(let i=0,j=ring.length-1;i<ring.length;j=i++){const a=ring[i],b=ring[j];if((a[1]>p[1])!==(b[1]>p[1])&&p[0]<(b[0]-a[0])*(p[1]-a[1])/(b[1]-a[1])+a[0])inside=!inside;}return inside;}
+function segment(p,a,b){const kx=R*rad*Math.cos(p[1]*rad),ky=R*rad;const ax=(a[0]-p[0])*kx,ay=(a[1]-p[1])*ky,bx=(b[0]-p[0])*kx,by=(b[1]-p[1])*ky,dx=bx-ax,dy=by-ay;const t=Math.max(0,Math.min(1,-(ax*dx+ay*dy)/(dx*dx+dy*dy||1)));return Math.hypot(ax+t*dx,ay+t*dy);}
+function lineDistance(p,line){let d=Infinity;for(let i=1;i<line.length;i++)d=Math.min(d,segment(p,line[i-1],line[i]));return d;}
+function polygonDistance(p,rings){if(inRing(p,rings[0])&&!rings.slice(1).some(r=>inRing(p,r)))return 0;return Math.min(...rings.map(r=>lineDistance(p,r)));}
+export function geometryDistance(p,g){if(!g)return Infinity;switch(g.type){case 'Point':return haversine(p,g.coordinates);case 'MultiPoint':return Math.min(...g.coordinates.map(c=>haversine(p,c)));case 'LineString':return lineDistance(p,g.coordinates);case 'MultiLineString':return Math.min(...g.coordinates.map(c=>lineDistance(p,c)));case 'Polygon':return polygonDistance(p,g.coordinates);case 'MultiPolygon':return Math.min(...g.coordinates.map(c=>polygonDistance(p,c)));case 'GeometryCollection':return Math.min(...g.geometries.map(c=>geometryDistance(p,c)));default:return Infinity;}}
+export function bounds(p,r=1000){const lat=r/(R*rad),lon=lat/Math.cos(p[1]*rad);return [p[0]-lon,p[1]-lat,p[0]+lon,p[1]+lat];}
