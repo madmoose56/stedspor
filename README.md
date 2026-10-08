@@ -11,7 +11,7 @@ Første PWA-versjon for iPhone. Åpne den publiserte HTTPS-adressen i Safari, og
 - Gårds-, bruks-, feste- og seksjonsnummer fra Kartverkets eiendoms-API. Flere eiendommer ved samme punkt vises.
 - Kartlagte naturtyper etter Miljødirektoratets instruks, verneområder og kulturminnelokaliteter fra Riksantikvaren.
 - Samlet og kategorifiltrert liste, sortert etter avstand, innen 100 meter eller 1 kilometer. 1-kilometerlisten inkluderer også treffene innen 100 meter.
-- Matrikkelen-kortet kan åpne GeoNorges eiendomskart teig i halv bredde og i full størrelse, med teiggrenser, grensepunkter og matrikkelnummer fra Matrikkelkart WMS.
+- Matrikkelen-kortet kan åpne GeoNorges eiendomskart teig som et kvadrat i full kortbredde og i full størrelse, med teiggrenser, grensepunkter og matrikkelnummer fra Matrikkelkart WMS.
 - Detaljer og lenker til originalkildene. Kulturminner kan være fjernet eller ikke synlige i terrenget.
 - Nettfeil vises per datakilde. Ingen oppdiktede eiernavn, signalverdier eller karttreff.
 - Manifest, PNG-ikoner og service worker for appskallet. Nye data og kart krever nett; GPS-resultater lagres ikke mellom økter.

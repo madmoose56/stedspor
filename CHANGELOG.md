@@ -2,6 +2,8 @@
 
 ## Ikke utgitt
 
+- Eiendomskartet er kvadratisk i full kortbredde. Knappen Full størrelse ligger i kartet med to tekstlinjer. Kildehenvisning vises utenfor kartbildet.
+
 - Eiendomskart teig fra GeoNorges Matrikkelkart WMS kan åpnes i Matrikkelen-kortet ved valgt posisjon. Forhåndsvisning med halv bredde og utvidelse til full størrelse.
 
 - Ny overskrift: Sted info. Adressevalg til venstre og Min posisjon til høyre.
