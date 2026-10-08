@@ -2,6 +2,8 @@
 
 ## Ikke utgitt
 
+- Eiendomskart teig fra GeoNorges Matrikkelkart WMS kan åpnes i Matrikkelen-kortet ved valgt posisjon. Forhåndsvisning med halv bredde og utvidelse til full størrelse.
+
 - Ny overskrift: Sted info. Adressevalg til venstre og Min posisjon til høyre.
 - Norske adressesøk med gate, husnummer/bokstav, postnummer og poststed fra Kartverket. Valgt adresse bruker eksisterende stedsoppslag og kart.
 
