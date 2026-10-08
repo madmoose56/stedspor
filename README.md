@@ -62,3 +62,8 @@ Velg et endelig app-ID før du oppretter plattformen. Legg til en beskrivende `N
 - [OpenStreetMap](https://www.openstreetmap.org/copyright) – kartfliser, kildehenvisning i kartet. Appen forhåndslaster eller lagrer ikke fliser uten nett. Vurder egnet flisleverandør for større trafikk.
 
 
+
+## Kildekode på GitHub
+
+Privat repository: https://github.com/madmoose56/stedspor. Se VERSJONER.md for oppdateringer, tagger og forskjellen mellom GitHub og Sites-publisering.
+
