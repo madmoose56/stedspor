@@ -2,6 +2,8 @@
 
 ## Ikke utgitt
 
+- Valgt avstandsring fyller tilgjengelig kartutsnitt med liten kant. En kompakt knapp bytter mellom 100 m og 1 km. Alle nye posisjonsoppslag starter på 100 m.
+
 - Kartet starter med 100 meters utsnitt. Velg 100 m eller 1 km øverst til høyre; begge valg sentrerer kartet på posisjonen.
 
 - Nye oppsummeringer nederst for natur/vern og kulturminner, gruppert ved punktet, innen 100 m og mellom 100 m og 1 km.
