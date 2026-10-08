@@ -2,6 +2,8 @@
 
 ## Ikke utgitt
 
+- Kartet starter med 100 meters utsnitt. Velg 100 m eller 1 km øverst til høyre; begge valg sentrerer kartet på posisjonen.
+
 - Nye oppsummeringer nederst for natur/vern og kulturminner, gruppert ved punktet, innen 100 m og mellom 100 m og 1 km.
 - Interaktivt kart nederst med Kartverkets bakgrunnskart, eiendomsgrenser, naturreservater, øvrige verneområder og naturtyper. Lokal Leaflet 1.9.4, avstandsringer og retur til valgt posisjon.
 
