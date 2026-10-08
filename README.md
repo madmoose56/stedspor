@@ -67,3 +67,8 @@ Velg et endelig app-ID før du oppretter plattformen. Legg til en beskrivende `N
 
 Privat repository: https://github.com/madmoose56/stedspor. Se VERSJONER.md for oppdateringer, tagger og forskjellen mellom GitHub og Sites-publisering.
 
+
+## GitHub Pages
+
+Se GITHUB-PAGES.md for publisering på https://madmoose56.github.io/stedspor/. Kjør npm run pages:prepare før commit av appendringer.
+

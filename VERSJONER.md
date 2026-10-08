@@ -46,4 +46,5 @@ GitHub brukes til kildekode og historikk. Et push til GitHub oppdaterer **ikke a
 
 Sites bruker et separat kilderepository. `.openai/hosting.json` beholder koblingen til det eksisterende nettstedet. Ved oppdatering av nettsiden må endringene også synkroniseres og publiseres gjennom Sites. Be for eksempel Codex om å «publisere siste versjon av Stedspor fra D:\GitHub\stedspor til eksisterende Sites-nettsted».
 
-Det er ikke satt opp GitHub Pages, automatisk deploy eller lagring av tilgangstokener i prosjektet. Native iOS er fremdeles et senere byggesteg beskrevet i README.md.
+GitHub Pages-oppsettet er beskrevet i GITHUB-PAGES.md. Kjør npm run pages:prepare før commit av appendringer. Det lagres ingen tilgangstokener i prosjektet. Native iOS er fremdeles et senere byggesteg beskrevet i README.md.
+
