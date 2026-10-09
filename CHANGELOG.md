@@ -2,6 +2,8 @@
 
 ## Ikke utgitt
 
+- Min posisjon åpner adressefeltet og fyller gate, husnummer/bokstav, postnummer og poststed fra nærmeste registrerte Kartverket-adresse. Avstanden vises; sene GPS-svar og manuelle redigeringer beskyttes.
+
 - Fjernet forklaringsteksten under den nærmeste adressen i adressekortet.
 
 - Eiendomskartet er kvadratisk i full kortbredde. Knappen Full størrelse ligger i kartet med to tekstlinjer. Kildehenvisning vises utenfor kartbildet.

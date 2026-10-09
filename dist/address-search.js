@@ -8,3 +8,10 @@ export function addressParams({street,number='',postcode='',place=''},page=0){
   if(place)p.poststed=place;
   return p;
 }
+
+export function nearestAddressFields(items){
+  const nearest=items.filter(item=>item.type==='address'&&Number.isFinite(item.distance)&&item.distance>=0).sort((a,b)=>a.distance-b.distance)[0];
+  if(!nearest)return null;
+  const address=nearest.data??{};
+  return {street:address.adressenavn??'',number:address.nummer==null?'':String(address.nummer)+(address.bokstav??'').toUpperCase(),postcode:String(address.postnummer??''),place:address.poststed??'',label:address.adressetekst??nearest.title,distance:nearest.distance};
+}
