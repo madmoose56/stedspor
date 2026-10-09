@@ -2,6 +2,8 @@
 
 ## Ikke utgitt
 
+- Fjernet de to separate oversiktskortene for natur/verneområder og kulturminner over kartet. Kartlag og trefflisten i I nærheten beholdes.
+
 - Kulturminneoversikten angir 1 km fra valgt posisjon. Liste og kart bruker samme avgrensning; treff utenfor sirkelen utelates selv om de ligger innenfor søkets firkantede kartutsnitt.
 
 - Kartvalget Eiendomsgrenser er fjernet. Kulturminner vises som områder og trykkbare K-markører med samme nummer i oversikten, trefflisten og detaljene.

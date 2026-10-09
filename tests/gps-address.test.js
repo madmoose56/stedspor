@@ -13,7 +13,7 @@ class Element{
   showModal(){this.open=true;}
 }
 function harness({addresses=[{...address,adressenavn:'Fjern gate',meterDistanseTilPunkt:250},address],failure=false,hold=false,cultureFeatures=[],leaflet,cultureFailure=false}={}){
-  const elements=new Map(),get=selector=>{if(!elements.has(selector))elements.set(selector,new Element());return elements.get(selector);};
+  const elements=new Map(),get=selector=>{if(['#nature-overview','#culture-overview'].includes(selector))return null;if(!elements.has(selector))elements.set(selector,new Element());return elements.get(selector);};
   const callbacks=[],requests=[];let release;
   const pending=hold?new Promise(resolve=>release=resolve):null;
   const context={URL,URLSearchParams,AbortController,AbortSignal,Date,Math,Number,Promise,setTimeout,clearTimeout,console,nearestAddressFields,geometryDistance,bounds,
@@ -27,7 +27,7 @@ function harness({addresses=[{...address,adressenavn:'Fjern gate',meterDistanseT
   vm.runInNewContext(fs.readFileSync(new URL('../dist/app.js',import.meta.url),'utf8').replace(/^import .+;\r?\n/gm,''),context);
   for(const key of ['culture','protected','reserve'])get('#layer-'+key).checked=true;
   for(const [selector,value] of [['#search-street','Tidligere gate'],['#search-number','9'],['#search-postcode','0001'],['#search-place','Tidligere sted']])get(selector).value=value;
-  return {get,requests,callbacks,release,toggleCulture(enabled){get('#layer-culture').checked=enabled;context.updateMapLayers();},start(){get('#locate').onclick();},position(){return callbacks.at(-1).ok({coords:{longitude:10.7387,latitude:59.9075,accuracy:8}});}};
+  return {get,requests,callbacks,release,showAllNearby(){vm.runInNewContext('state.radius=1000;renderNear();',context);},toggleCulture(enabled){get('#layer-culture').checked=enabled;context.updateMapLayers();},start(){get('#locate').onclick();},position(){return callbacks.at(-1).ok({coords:{longitude:10.7387,latitude:59.9075,accuracy:8}});}};
 }
 const values=fixture=>['#search-street','#search-number','#search-postcode','#search-place'].map(id=>fixture.get(id).value);
 
@@ -91,13 +91,13 @@ function fakeLeaflet(){
 const heritage=(id,title,lat)=>({id,geometry:{type:'Point',coordinates:[10.7387,lat]},properties:{navn:title,lokalitetskategori:'L-ARK',vernetype:'Fredet'}});
 test('Culture map markers match the global list numbers across distance groups and open the right details',async()=>{
   const map=fakeLeaflet(),f=harness({leaflet:map.L,cultureFeatures:[heritage(3,'Fjernt minne',59.912),heritage(2,'Nært minne',59.908),heritage(1,'Her-minne',59.9075)]});
-  f.start();await f.position();
+  f.start();await f.position();f.showAllNearby();
   const group=map.groups.find(g=>g.layers.some(l=>l.kind==='marker'));
   const markers=group.layers.filter(l=>l.kind==='marker');
   assert.deepEqual(markers.map(m=>m.options.icon.html),['K1','K2','K3']);
   for(const [index,title] of ['Her-minne','Nært minne','Fjernt minne'].entries()){
     assert.equal(markers[index].options.title,`K${index+1} · ${title}`);
-    assert(f.get('#culture-overview').innerHTML.includes(`K${index+1} · ${title}`));
+    assert(f.get('#results').innerHTML.includes(`K${index+1} · ${title}`));
   }
   assert(f.get('#results').innerHTML.includes('K2 · Nært minne'));
   markers[1].events.click();assert.equal(f.get('#detail').open,true);assert(f.get('#detail-content').innerHTML.includes('K2 · Nært minne'));
@@ -122,8 +122,8 @@ test('Culture lookup keeps only sites within the 1 km circle, including at the b
     heritage(1,'Nært kulturminne',59.908),heritage(2,'Innenfor grensen',inside[3]),heritage(3,'Utenfor grensen',outside[3]),cornerFeature,
     {id:5,geometry:null,properties:{navn:'Ukjent plassering'}}
   ]});
-  f.start();await f.position();
-  const overview=f.get('#culture-overview').innerHTML;
+  f.start();await f.position();f.showAllNearby();
+  const overview=f.get('#results').innerHTML;
   assert(overview.includes('K1 · Nært kulturminne'));assert(overview.includes('K2 · Innenfor grensen'));
   for(const title of ['Utenfor grensen','Utenfor i kartutsnittets hjørne','Ukjent plassering'])assert(!overview.includes(title));
   const group=map.groups.find(g=>g.layers.some(l=>l.kind==='marker'));

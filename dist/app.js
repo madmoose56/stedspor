@@ -67,12 +67,6 @@ let fieldMap,pointLayer,ringsLayer,lastMapPoint;
 let fieldMapRadius=100;
 const mapLayers={},tileFailures=new Set();
 function mapErrors(){const missing=[];for(const [key,label] of [['protected','Verneområder'],['nature','Naturtyper'],['culture','Kulturminner']])if(state.statuses[key]==='error')missing.push(`${label} kunne ikke hentes.`);missing.push(...tileFailures);$('#map-errors').textContent=missing.join(' ');$('#map-errors').hidden=!missing.length;}
-function overviewRows(items){const row=i=>`<li><button data-item="${esc(i.key)}">${esc(itemLabel(i))}</button><span>${fmt(i.distance)}</span><small>${esc(i.subtitle)}</small></li>`;return `<ul class="overview-list">${items.slice(0,8).map(row).join('')}</ul>${items.length>8?`<details class="overview-more"><summary>Vis ${items.length-8} flere treff</summary><ul class="overview-list">${items.slice(8).map(row).join('')}</ul></details>`:''}`;}
-function renderOverview(target,keys){if(!state.point)return;const items=(keys.length===1&&keys[0]==='culture'?cultureItems():state.items.filter(i=>keys.includes(i.type))).sort((a,b)=>a.distance-b.distance||a.title.localeCompare(b.title,'nb')||a.key.localeCompare(b.key));
-const messages=keys.filter(k=>state.statuses[k]!=='ok').map(k=>`<p class="${state.statuses[k]==='error'?'map-error':'subtle'}">${esc(names[k])}: ${state.statuses[k]==='error'?'Kunne ikke hente data. Oppdater posisjonen for å prøve igjen.':'Henter data …'}</p>`).join('');
-const complete=keys.every(k=>state.statuses[k]==='ok'),failed=keys.some(k=>state.statuses[k]==='error');
-const groups=[['Du står i',i=>i.distance===0],['Innen 100 m',i=>i.distance>0&&i.distance<=100],['Mellom 100 m og 1 km',i=>i.distance>100&&i.distance<=1000]];
-$(target).innerHTML=messages+groups.map(([label,filter])=>{const rows=items.filter(filter);return `<section class="overview-group"><h3>${label}${rows.length?` <span class="subtle">(${rows.length})</span>`:''}</h3>${rows.length?overviewRows(rows):`<p class="subtle">${complete?'Ingen registrerte treff.':failed?'Datagrunnlaget er ufullstendig.':'Henter data …'}</p>`}</section>`;}).join('');bindItems($(target));}
 function updateMapLayers(){if(!fieldMap)return;for(const [key,layer] of Object.entries(mapLayers)){const enabled=$(`#layer-${key}`).checked;if(enabled&&!fieldMap.hasLayer(layer))layer.addTo(fieldMap);else if(!enabled&&fieldMap.hasLayer(layer))fieldMap.removeLayer(layer);}}
 function recenterMap(){if(!fieldMap||!state.point)return;fieldMap.invalidateSize();const ring=ringsLayer?.getLayers().find(layer=>layer.getRadius()===fieldMapRadius);if(ring)fieldMap.fitBounds(ring.getBounds(),{padding:[10,10],maxZoom:20,animate:false});}
 function setMapRadius(radius){fieldMapRadius=radius;const button=$('#map-radius-toggle');if(button){button.textContent=radius===100?'1 km ↔':'100 m ↔';button.setAttribute('aria-label',radius===100?'Vis 1 km i kartet':'Vis 100 m i kartet');button.title=radius===100?'Bytt til 1 km':'Bytt til 100 m';}recenterMap();}
@@ -93,7 +87,7 @@ const extent=area.getBounds();if(!extent.isValid())continue;
 L.marker(extent.getCenter(),{icon:L.divIcon({className:'culture-map-marker',html:label,iconSize:[38,30],iconAnchor:[19,15]}),title,alt:title,riseOnHover:true}).bindTooltip(esc(title)).on('click',()=>showDetail(item)).addTo(mapLayers.culture);
 }
 pointLayer.bringToFront();updateMapLayers();mapErrors();}
-function renderBottom(){renderOverview('#nature-overview',['protected','nature']);renderOverview('#culture-overview',['culture']);renderFieldMap();}
+function renderBottom(){renderFieldMap();}
 $$('.map-layer-options input').forEach(input=>input.onchange=()=>{updateMapLayers();mapErrors();});$('#recenter-map').onclick=recenterMap;
 
 let addressController,addressRequest=0,addressPage=0,addressTotal=0,addressMatches=[],addressFields;
