@@ -2,6 +2,8 @@
 
 ## Ikke utgitt
 
+- Kartvalget Eiendomsgrenser er fjernet. Kulturminner vises som områder og trykkbare K-markører med samme nummer i oversikten, trefflisten og detaljene.
+
 - GPS-adressefeltet viser bare adressefeltene: overskrift, søkehjelp, søkeknapp og adressestatus skjules når Min posisjon er valgt. Adresse åpner det vanlige adressesøket igjen.
 
 - Min posisjon åpner adressefeltet og fyller gate, husnummer/bokstav, postnummer og poststed fra nærmeste registrerte Kartverket-adresse. Avstanden vises; sene GPS-svar og manuelle redigeringer beskyttes.

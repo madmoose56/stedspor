@@ -10,21 +10,24 @@ class Element{
   constructor(){this.value='';this.textContent='';this.innerHTML='';this.hidden=true;this.disabled=false;this.dataset={};this.handlers={};this.attributes={};this.classList={toggle(){}};}
   addEventListener(name,fn){this.handlers[name]=fn;}setAttribute(name,value){this.attributes[name]=value;}
   querySelector(){return new Element();}querySelectorAll(){return [];}remove(){}focus(){}
+  showModal(){this.open=true;}
 }
-function harness({addresses=[{...address,adressenavn:'Fjern gate',meterDistanseTilPunkt:250},address],failure=false,hold=false}={}){
+function harness({addresses=[{...address,adressenavn:'Fjern gate',meterDistanseTilPunkt:250},address],failure=false,hold=false,cultureFeatures=[],leaflet,cultureFailure=false}={}){
   const elements=new Map(),get=selector=>{if(!elements.has(selector))elements.set(selector,new Element());return elements.get(selector);};
   const callbacks=[],requests=[];let release;
   const pending=hold?new Promise(resolve=>release=resolve):null;
   const context={URL,URLSearchParams,AbortController,AbortSignal,Date,Math,Number,Promise,setTimeout,clearTimeout,console,nearestAddressFields,geometryDistance,bounds,
-    addEventListener(){},window:{},navigator:{geolocation:{getCurrentPosition(ok,error){callbacks.push({ok,error});}}},
+    addEventListener(){},window:{L:leaflet},L:leaflet,ResizeObserver:class{observe(){}},navigator:{geolocation:{getCurrentPosition(ok,error){callbacks.push({ok,error});}}},
     document:{querySelector:get,querySelectorAll:()=>[],createElement:()=>new Element()},
     fetch:async url=>{requests.push(String(url));let data={features:[],links:[],eiendom:[]};
       if(String(url).includes('/adresser/v1/punktsok')){if(failure)throw Error('Offline');if(pending)await pending;data={adresser:addresses,metadata:{totaltAntallTreff:addresses.length}};}
+      if(String(url).includes('api.ra.no/')){if(cultureFailure)throw Error('Offline');data={features:cultureFeatures,links:[]};}
       return {ok:true,json:async()=>data};}
   };
   vm.runInNewContext(fs.readFileSync(new URL('../dist/app.js',import.meta.url),'utf8').replace(/^import .+;\r?\n/gm,''),context);
+  for(const key of ['culture','protected','reserve'])get('#layer-'+key).checked=true;
   for(const [selector,value] of [['#search-street','Tidligere gate'],['#search-number','9'],['#search-postcode','0001'],['#search-place','Tidligere sted']])get(selector).value=value;
-  return {get,requests,callbacks,release,start(){get('#locate').onclick();},position(){return callbacks.at(-1).ok({coords:{longitude:10.7387,latitude:59.9075,accuracy:8}});}};
+  return {get,requests,callbacks,release,toggleCulture(enabled){get('#layer-culture').checked=enabled;context.updateMapLayers();},start(){get('#locate').onclick();},position(){return callbacks.at(-1).ok({coords:{longitude:10.7387,latitude:59.9075,accuracy:8}});}};
 }
 const values=fixture=>['#search-street','#search-number','#search-postcode','#search-place'].map(id=>fixture.get(id).value);
 
@@ -63,4 +66,51 @@ test('Address switches from GPS mode to the ordinary search without closing the 
   for(const id of ['#address-title','#address-help','#search-address'])assert.equal(f.get(id).hidden,false);
   assert.equal(f.get('#address-status').hidden,true,'Old GPS status stays removed');
   assert.deepEqual(values(f),['Myntgata','3A','0151','OSLO']);assert.equal(f.requests.length,before);assert.equal(f.callbacks.length,1);
+});
+
+function fakeLeaflet(){
+  const maps=[],markers=[],groups=[],tiles=[];
+  class Layer{
+    constructor(kind,options={}){this.kind=kind;this.options=options;this.layers=[];this.events={};}
+    addTo(target){target.layers.push(this);this.parent=target;return this;}
+    bindTooltip(text){this.tooltip=text;return this;}bindPopup(text){this.popup=text;return this;}
+    on(name,fn){this.events[name]=fn;return this;}bringToFront(){}setLatLng(){return this;}
+    clearLayers(){this.layers=[];}getLayers(){return this.layers;}getRadius(){return this.options.radius;}
+    getBounds(){return {isValid:()=>true,getCenter:()=>({lat:59.9075,lng:10.7387})};}
+  }
+  const tileLayer=(url,options)=>{tiles.push(url);return new Layer('tile',options);};tileLayer.wms=tileLayer;
+  const L={tileLayer,
+    map(){const m={layers:[],attributionControl:{addAttribution(){}},setView(){return this;},invalidateSize(){},fitBounds(){},hasLayer(layer){return this.layers.includes(layer);},removeLayer(layer){this.layers=this.layers.filter(l=>l!==layer);}};maps.push(m);return m;},
+    layerGroup(){const group=new Layer('group');groups.push(group);return group;},
+    circleMarker:()=>new Layer('position'),circle:(point,options)=>new Layer('ring',options),
+    geoJSON:(geometry,options)=>new Layer('geometry',{geometry,...options}),
+    divIcon:options=>options,marker(point,options){const marker=new Layer('marker',{point,...options});markers.push(marker);return marker;},
+    control:()=>({addTo(){this.onAdd();}}),DomUtil:{create:()=>new Element()},DomEvent:{disableClickPropagation(){},disableScrollPropagation(){}}
+  };L.control.scale=()=>({addTo(){}});return {L,maps,markers,groups,tiles};
+}
+const heritage=(id,title,lat)=>({id,geometry:{type:'Point',coordinates:[10.7387,lat]},properties:{navn:title,lokalitetskategori:'L-ARK',vernetype:'Fredet'}});
+test('Culture map markers match the global list numbers across distance groups and open the right details',async()=>{
+  const map=fakeLeaflet(),f=harness({leaflet:map.L,cultureFeatures:[heritage(3,'Fjernt minne',59.912),heritage(2,'Nært minne',59.908),heritage(1,'Her-minne',59.9075)]});
+  f.start();await f.position();
+  const group=map.groups.find(g=>g.layers.some(l=>l.kind==='marker'));
+  const markers=group.layers.filter(l=>l.kind==='marker');
+  assert.deepEqual(markers.map(m=>m.options.icon.html),['K1','K2','K3']);
+  for(const [index,title] of ['Her-minne','Nært minne','Fjernt minne'].entries()){
+    assert.equal(markers[index].options.title,`K${index+1} · ${title}`);
+    assert(f.get('#culture-overview').innerHTML.includes(`K${index+1} · ${title}`));
+  }
+  assert(f.get('#results').innerHTML.includes('K2 · Nært minne'));
+  markers[1].events.click();assert.equal(f.get('#detail').open,true);assert(f.get('#detail-content').innerHTML.includes('K2 · Nært minne'));
+  assert.equal(group.layers.filter(l=>l.kind==='geometry').length,3);
+  assert(!map.tiles.some(url=>url.includes('wms.matrikkel')),'Removed field property layer makes no WMS requests');
+  const before=f.requests.length;f.toggleCulture(false);assert(!map.maps[0].hasLayer(group));f.toggleCulture(true);assert(map.maps[0].hasLayer(group));assert.equal(f.requests.length,before);
+});
+test('A new point clears old culture markers while the next lookup is loading',async()=>{
+  const map=fakeLeaflet(),features=[heritage(1,'Tidligere minne',59.9075)],f=harness({leaflet:map.L,cultureFeatures:features});
+  f.start();await f.position();const group=map.groups.find(g=>g.layers.some(l=>l.kind==='marker'));features.length=0;
+  const lookup=f.get('#example').onclick();assert.equal(group.layers.length,0);await lookup;assert.equal(group.layers.length,0);
+});
+test('Culture service errors are visible on the map instead of implying no heritage sites',async()=>{
+  const map=fakeLeaflet(),f=harness({leaflet:map.L,cultureFailure:true});f.start();await f.position();
+  assert.equal(f.get('#map-errors').hidden,false);assert.match(f.get('#map-errors').textContent,/Kulturminner kunne ikke hentes/);
 });
