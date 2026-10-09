@@ -4,7 +4,7 @@ const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const link=(url,label)=>{try{const u=new URL(url);return u.protocol==='https:'?`<a href="${esc(u.href)}" target="_blank" rel="noopener">${esc(label)} ↗</a>`:'';}catch{return '';}};
 const state={point:null,source:null,accuracy:null,time:null,radius:100,category:'all',view:'here',items:[],statuses:{},municipality:null,limit:40,request:0,loading:false};
-let gpsRequest=0,addressFormRevision=0;
+let gpsRequest=0,addressFormRevision=0,gpsAddressMode=false;
 const types={address:['Adresse','↗'],property:['Eiendom','▧'],protected:['Verneområde','♧'],nature:['Naturtype','♧'],culture:['Kulturminne','⌑']};
 const names={address:'Adresser',property:'Eiendommer',nature:'Naturtyper',protected:'Verneområder',culture:'Kulturminner',municipality:'Kommune og fylke'};
 const fmt=d=>d===0?'Her':d<1000?`${Math.round(d)} m`:`${(d/1000).toFixed(2).replace('.',',')} km`;
@@ -19,7 +19,7 @@ $$('dialog').forEach(d=>d.onclick=e=>{if(e.target===d){const r=d.getBoundingClie
 $('#coordinates').onsubmit=e=>{e.preventDefault();const lat=Number($('#latitude').value),lon=Number($('#longitude').value);if(!Number.isFinite(lat)||!Number.isFinite(lon)||Math.abs(lat)>90||Math.abs(lon)>180)return;lookup([lon,lat],'Manuelt valgt punkt');};
 $('#example').onclick=()=>lookup([10.7387,59.9075],'Eksempel: Akershus festning');
 $('#locate').onclick=()=>{
-  cancelAddressSearch();const request=++gpsRequest,revision=addressFormRevision;
+  cancelAddressSearch();setAddressMode(true);const request=++gpsRequest,revision=addressFormRevision;
   $('#address-panel').hidden=false;$('#choose-address').setAttribute('aria-expanded','true');
   $('#address-matches').innerHTML='';$('#more-addresses').hidden=true;
   if(!navigator.geolocation){notice('GPS er ikke tilgjengelig. Velg Adresse eller skriv inn koordinater.');addressStatus('Adressefeltene er ikke endret. GPS er ikke tilgjengelig.',true);return;}
@@ -94,9 +94,15 @@ function fillGPSAddress(items){
   for(const [id,key] of [['search-street','street'],['search-number','number'],['search-postcode','postcode'],['search-place','place']])$('#'+id).value=fields[key];
   addressStatus('Nærmeste registrerte adresse: '+fields.label+', '+fields.postcode+' '+fields.place+' ('+fmt(fields.distance)+' fra GPS-posisjonen). Du kan redigere adressen.');
 }
-function addressStatus(message,error=false){const el=$('#address-status');el.textContent=message;el.hidden=!message;el.classList.toggle('map-error',error);}
+function setAddressMode(gps){
+  gpsAddressMode=gps;
+  for(const id of ['address-title','address-help','search-address'])$('#'+id).hidden=gps;
+  $('#address-status').hidden=gps||!$('#address-status').textContent;
+  $('#address-panel').setAttribute('aria-label',gps?'Adresse ved min posisjon':'Søk etter adresse i Norge');
+}
+function addressStatus(message,error=false){const el=$('#address-status');el.textContent=message;el.hidden=gpsAddressMode||!message;el.classList.toggle('map-error',error);}
 function cancelAddressSearch(){addressRequest++;addressController?.abort();$('#search-address').disabled=false;$('#search-address').textContent='Søk adresse';$('#more-addresses').disabled=false;}
-$('#choose-address').onclick=()=>{const panel=$('#address-panel');panel.hidden=!panel.hidden;$('#choose-address').setAttribute('aria-expanded',String(!panel.hidden));if(!panel.hidden)$('#search-street').focus();};
+$('#choose-address').onclick=()=>{const panel=$('#address-panel'),wasGPS=gpsAddressMode;setAddressMode(false);if(wasGPS)addressStatus('');panel.hidden=wasGPS?false:!panel.hidden;$('#choose-address').setAttribute('aria-expanded',String(!panel.hidden));if(!panel.hidden)$('#search-street').focus();};
 $('#address-search').onsubmit=e=>{e.preventDefault();addressFields={street:$('#search-street').value,number:$('#search-number').value,postcode:$('#search-postcode').value,place:$('#search-place').value};searchAddress(0);};
 $('#more-addresses').onclick=()=>searchAddress(addressPage+1);
 function showAddressMatches(){const container=$('#address-matches');container.innerHTML=addressMatches.map((a,index)=>`<button class="address-match" type="button" data-address-index="${index}"><strong>${esc(a.adressetekst)}</strong><span>${esc(a.postnummer)} ${esc(a.poststed)} · ${esc(a.kommunenavn)} kommune</span><span class="address-select">Velg adresse ↗</span></button>`).join('');container.querySelectorAll('[data-address-index]').forEach(button=>button.onclick=()=>chooseAddress(addressMatches[Number(button.dataset.addressIndex)]));$('#more-addresses').hidden=addressMatches.length>=addressTotal;}

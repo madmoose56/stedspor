@@ -50,3 +50,17 @@ test('Nearest address ignores invalid distances and does not invent missing stre
   const fields=nearestAddressFields([{type:'address',distance:NaN,data:address},{type:'address',distance:0,data:{postnummer:'0001',poststed:'Sted',adressetekst:'Matrikkeladresse'}}]);
   assert.equal(fields.street,'');assert.equal(fields.number,'');assert.equal(fields.postcode,'0001');assert.equal(nearestAddressFields([]),null);
 });
+
+test('GPS mode hides search heading, help, submit and status even after a GPS error',()=>{
+  const f=harness();f.start();
+  for(const id of ['#address-title','#address-help','#search-address','#address-status'])assert.equal(f.get(id).hidden,true);
+  f.callbacks[0].error({code:3});assert.equal(f.get('#address-status').hidden,true);assert.match(f.get('#notice').textContent,/GPS brukte for lang tid/);
+});
+test('Address switches from GPS mode to the ordinary search without closing the panel or starting GPS',async()=>{
+  const f=harness();f.start();await f.position();const before=f.requests.length;
+  f.get('#choose-address').onclick();
+  assert.equal(f.get('#address-panel').hidden,false);
+  for(const id of ['#address-title','#address-help','#search-address'])assert.equal(f.get(id).hidden,false);
+  assert.equal(f.get('#address-status').hidden,true,'Old GPS status stays removed');
+  assert.deepEqual(values(f),['Myntgata','3A','0151','OSLO']);assert.equal(f.requests.length,before);assert.equal(f.callbacks.length,1);
+});
