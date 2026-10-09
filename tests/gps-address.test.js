@@ -114,3 +114,18 @@ test('Culture service errors are visible on the map instead of implying no herit
   const map=fakeLeaflet(),f=harness({leaflet:map.L,cultureFailure:true});f.start();await f.position();
   assert.equal(f.get('#map-errors').hidden,false);assert.match(f.get('#map-errors').textContent,/Kulturminner kunne ikke hentes/);
 });
+
+test('Culture lookup keeps only sites within the 1 km circle, including at the boundary and excluding bounding-box corners',async()=>{
+  const point=[10.7387,59.9075],inside=bounds(point,999),outside=bounds(point,1001),corner=bounds(point,900);
+  const cornerFeature=heritage(4,'Utenfor i kartutsnittets hjørne',corner[3]);cornerFeature.geometry.coordinates[0]=corner[2];
+  const map=fakeLeaflet(),f=harness({leaflet:map.L,cultureFeatures:[
+    heritage(1,'Nært kulturminne',59.908),heritage(2,'Innenfor grensen',inside[3]),heritage(3,'Utenfor grensen',outside[3]),cornerFeature,
+    {id:5,geometry:null,properties:{navn:'Ukjent plassering'}}
+  ]});
+  f.start();await f.position();
+  const overview=f.get('#culture-overview').innerHTML;
+  assert(overview.includes('K1 · Nært kulturminne'));assert(overview.includes('K2 · Innenfor grensen'));
+  for(const title of ['Utenfor grensen','Utenfor i kartutsnittets hjørne','Ukjent plassering'])assert(!overview.includes(title));
+  const group=map.groups.find(g=>g.layers.some(l=>l.kind==='marker'));
+  assert.deepEqual(group.layers.filter(l=>l.kind==='marker').map(m=>m.options.title),['K1 · Nært kulturminne','K2 · Innenfor grensen']);
+});

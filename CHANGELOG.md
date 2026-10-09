@@ -2,6 +2,8 @@
 
 ## Ikke utgitt
 
+- Kulturminneoversikten angir 1 km fra valgt posisjon. Liste og kart bruker samme avgrensning; treff utenfor sirkelen utelates selv om de ligger innenfor søkets firkantede kartutsnitt.
+
 - Kartvalget Eiendomsgrenser er fjernet. Kulturminner vises som områder og trykkbare K-markører med samme nummer i oversikten, trefflisten og detaljene.
 
 - GPS-adressefeltet viser bare adressefeltene: overskrift, søkehjelp, søkeknapp og adressestatus skjules når Min posisjon er valgt. Adresse åpner det vanlige adressesøket igjen.
