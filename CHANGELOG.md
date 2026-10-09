@@ -2,6 +2,8 @@
 
 ## Ikke utgitt
 
+- Fjernet Velg sted uten GPS og den samlede Rundt deg-listen. I nærheten viser kulturminner, verneområder, eiendommer og adresser i hvert sitt felt innen 1 km, med uavhengig kildestatus og Vis flere.
+
 - Min posisjon starter automatisk ved åpning og står til venstre. Velg adresse står til høyre og avbryter et ventende GPS-oppslag. Naturtyper er fjernet fra datakilder, kartlag, kategorier og visninger.
 
 - Fjernet de to separate oversiktskortene for natur/verneområder og kulturminner over kartet. Kartlag og trefflisten i I nærheten beholdes.

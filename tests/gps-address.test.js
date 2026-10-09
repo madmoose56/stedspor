@@ -12,8 +12,8 @@ class Element{
   querySelector(){return new Element();}querySelectorAll(){return [];}remove(){}focus(){}
   showModal(){this.open=true;}
 }
-function harness({addresses=[{...address,adressenavn:'Fjern gate',meterDistanseTilPunkt:250},address],failure=false,hold=false,cultureFeatures=[],leaflet,cultureFailure=false,protectedFeatures=[],gpsAvailable=true}={}){
-  const elements=new Map(),get=selector=>{if(['#nature-overview','#culture-overview'].includes(selector))return null;if(!elements.has(selector))elements.set(selector,new Element());return elements.get(selector);};
+function harness({addresses=[{...address,adressenavn:'Fjern gate',meterDistanseTilPunkt:250},address],failure=false,hold=false,cultureFeatures=[],leaflet,cultureFailure=false,protectedFeatures=[],gpsAvailable=true,properties=[]}={}){
+  const elements=new Map(),get=selector=>{if(['#nature-overview','#culture-overview','#coordinates','#example','#latitude','#longitude','#results','#source-status','#more'].includes(selector))return null;if(!elements.has(selector))elements.set(selector,new Element());return elements.get(selector);};
   const callbacks=[],requests=[],pageEvents=new Map();let release;
   const pending=hold?new Promise(resolve=>release=resolve):null;
   const context={URL,URLSearchParams,AbortController,AbortSignal,Date,Math,Number,Promise,setTimeout,clearTimeout,console,nearestAddressFields,geometryDistance,bounds,
@@ -23,12 +23,13 @@ function harness({addresses=[{...address,adressenavn:'Fjern gate',meterDistanseT
       if(String(url).includes('/adresser/v1/punktsok')){if(failure)throw Error('Offline');if(pending)await pending;data={adresser:addresses,metadata:{totaltAntallTreff:addresses.length}};}
       if(String(url).includes('api.ra.no/')){if(cultureFailure)throw Error('Offline');data={features:cultureFeatures,links:[]};}
       if(String(url).includes('/services/vern/'))data={features:protectedFeatures};
+      if(String(url).includes('/eiendom/v1/punkt'))data={eiendom:properties,metadata:{totaltAntallTreff:properties.length}};
       return {ok:true,json:async()=>data};}
   };
   vm.runInNewContext(fs.readFileSync(new URL('../dist/app.js',import.meta.url),'utf8').replace(/^import .+;\r?\n/gm,''),context);
   for(const key of ['culture','protected','reserve'])get('#layer-'+key).checked=true;
   for(const [selector,value] of [['#search-street','Tidligere gate'],['#search-number','9'],['#search-postcode','0001'],['#search-place','Tidligere sted']])get(selector).value=value;
-  return {get,requests,callbacks,release,open(){pageEvents.get('DOMContentLoaded')();},showAllNearby(){vm.runInNewContext('state.radius=1000;renderNear();',context);},toggleCulture(enabled){get('#layer-culture').checked=enabled;context.updateMapLayers();},start(){get('#locate').onclick();},position(){return callbacks.at(-1).ok({coords:{longitude:10.7387,latitude:59.9075,accuracy:8}});}};
+  return {get,requests,callbacks,release,open(){pageEvents.get('DOMContentLoaded')();},showAllNearby(){context.renderNear();},more(type){context.showMoreNearby(type);},chooseAddress(data){return context.chooseAddress(data);},toggleCulture(enabled){get('#layer-culture').checked=enabled;context.updateMapLayers();},start(){get('#locate').onclick();},position(){return callbacks.at(-1).ok({coords:{longitude:10.7387,latitude:59.9075,accuracy:8}});}};
 }
 const values=fixture=>['#search-street','#search-number','#search-postcode','#search-place'].map(id=>fixture.get(id).value);
 
@@ -48,7 +49,7 @@ test('Denied GPS preserves address fields and enables the position button again'
   const f=harness(),before=values(f);f.start();f.callbacks[0].error({code:1});assert.deepEqual(values(f),before);assert.equal(f.get('#locate').disabled,false);assert.equal(f.requests.length,0);
 });
 test('A late GPS callback cannot replace a newer manually chosen point',async()=>{
-  const f=harness();f.start();await f.get('#example').onclick();const requestCount=f.requests.length;await f.position();assert.equal(f.requests.length,requestCount);assert.equal(f.get('#position-label').textContent,'Eksempel: Akershus festning');assert.equal(f.get('#search-street').value,'Tidligere gate');
+  const f=harness();f.start();await f.chooseAddress({...address,representasjonspunkt:{lon:10.74,lat:59.91}});const requestCount=f.requests.length;await f.position();assert.equal(f.requests.length,requestCount);assert.equal(f.get('#position-label').textContent,'Adresse: Myntgata 3A, 0151 OSLO');assert.equal(f.get('#search-street').value,'Tidligere gate');
 });
 test('Nearest address ignores invalid distances and does not invent missing street or house numbers',()=>{
   const fields=nearestAddressFields([{type:'address',distance:NaN,data:address},{type:'address',distance:0,data:{postnummer:'0001',poststed:'Sted',adressetekst:'Matrikkeladresse'}}]);
@@ -98,9 +99,9 @@ test('Culture map markers match the global list numbers across distance groups a
   assert.deepEqual(markers.map(m=>m.options.icon.html),['K1','K2','K3']);
   for(const [index,title] of ['Her-minne','Nært minne','Fjernt minne'].entries()){
     assert.equal(markers[index].options.title,`K${index+1} · ${title}`);
-    assert(f.get('#results').innerHTML.includes(`K${index+1} · ${title}`));
+    assert(f.get('#near-culture').innerHTML.includes(`K${index+1} · ${title}`));
   }
-  assert(f.get('#results').innerHTML.includes('K2 · Nært minne'));
+  assert(f.get('#near-culture').innerHTML.includes('K2 · Nært minne'));
   markers[1].events.click();assert.equal(f.get('#detail').open,true);assert(f.get('#detail-content').innerHTML.includes('K2 · Nært minne'));
   assert.equal(group.layers.filter(l=>l.kind==='geometry').length,3);
   assert(!map.tiles.some(url=>url.includes('wms.matrikkel')),'Removed field property layer makes no WMS requests');
@@ -109,7 +110,7 @@ test('Culture map markers match the global list numbers across distance groups a
 test('A new point clears old culture markers while the next lookup is loading',async()=>{
   const map=fakeLeaflet(),features=[heritage(1,'Tidligere minne',59.9075)],f=harness({leaflet:map.L,cultureFeatures:features});
   f.start();await f.position();const group=map.groups.find(g=>g.layers.some(l=>l.kind==='marker'));features.length=0;
-  const lookup=f.get('#example').onclick();assert.equal(group.layers.length,0);await lookup;assert.equal(group.layers.length,0);
+  const lookup=f.chooseAddress({...address,representasjonspunkt:{lon:10.74,lat:59.91}});assert.equal(group.layers.length,0);await lookup;assert.equal(group.layers.length,0);
 });
 test('Culture service errors are visible on the map instead of implying no heritage sites',async()=>{
   const map=fakeLeaflet(),f=harness({leaflet:map.L,cultureFailure:true});f.start();await f.position();
@@ -124,7 +125,7 @@ test('Culture lookup keeps only sites within the 1 km circle, including at the b
     {id:5,geometry:null,properties:{navn:'Ukjent plassering'}}
   ]});
   f.start();await f.position();f.showAllNearby();
-  const overview=f.get('#results').innerHTML;
+  const overview=f.get('#near-culture').innerHTML;
   assert(overview.includes('K1 · Nært kulturminne'));assert(overview.includes('K2 · Innenfor grensen'));
   for(const title of ['Utenfor grensen','Utenfor i kartutsnittets hjørne','Ukjent plassering'])assert(!overview.includes(title));
   const group=map.groups.find(g=>g.layers.some(l=>l.kind==='marker'));
@@ -137,7 +138,7 @@ test('Opening the app starts GPS once, fills its address and loads protected are
   assert.equal(f.callbacks.length,1);assert.equal(f.get('#locate').attributes['aria-pressed'],'true');assert.equal(f.get('#choose-address').attributes['aria-pressed'],'false');
   await f.position();assert.deepEqual(values(f),['Myntgata','3A','0151','OSLO']);assert.equal(f.get('#locate').disabled,false);
   assert.equal(f.requests.length,5);assert(f.requests.some(url=>url.includes('/services/vern/')));assert(!f.requests.some(url=>/naturtype/i.test(url)));
-  assert(f.get('#here-content').innerHTML.includes('Eksempelreservat'));assert(!/naturtype/i.test(f.get('#here-content').innerHTML+f.get('#source-status').innerHTML));
+  assert(f.get('#here-content').innerHTML.includes('Eksempelreservat'));assert(!/naturtype/i.test(f.get('#here-content').innerHTML+f.get('#near-protected').innerHTML));
 });
 test('Choosing an address cancels an automatic GPS callback before it can submit the old position',async()=>{
   const f=harness();f.open();f.get('#choose-address').onclick();await f.position();
@@ -159,4 +160,19 @@ test('Choosing an address during automatic data loading prevents late GPS addres
   const f=harness({hold:true});f.open();const lookup=f.position();f.get('#choose-address').onclick();
   f.get('#search-street').value='Manuell gate';f.release();await lookup;
   assert.deepEqual(values(f),['Manuell gate','9','0001','Tidligere sted']);assert.equal(f.get('#locate').disabled,false);assert.equal(f.get('#search-address').hidden,false);
+});
+
+test('Nearby cards keep categories and their errors separate, with independent pagination and the 1 km limit',async()=>{
+  const addresses=Array.from({length:80},(_,index)=>({...address,adressekode:index,adressetekst:`Adresse ${index}`,meterDistanseTilPunkt:index*10}));
+  addresses.push({...address,adressetekst:'Adresse utenfor',meterDistanseTilPunkt:1001});
+  const f=harness({addresses,cultureFailure:true,protectedFeatures:[{geometry:{type:'Point',coordinates:[10.7387,59.9075]},properties:{OBJECTID:1,offisieltNavn:'Mitt reservat',verneform:'NR'}}],properties:[{kommunenummer:'0301',gardsnummer:1,bruksnummer:2,meterFraPunkt:25}]});
+  f.open();await f.position();
+  assert.match(f.get('#near-culture').innerHTML,/Kunne ikke hente data/);
+  assert.match(f.get('#near-protected').innerHTML,/Mitt reservat/);assert(!f.get('#near-protected').innerHTML.includes('Adresse 0'));
+  assert.match(f.get('#near-property').innerHTML,/Gnr. 1 \/ bnr. 2/);
+  assert.match(f.get('#near-address').innerHTML,/80 treff/);assert(!f.get('#near-address').innerHTML.includes('Adresse utenfor'));
+  assert.equal((f.get('#near-address').innerHTML.match(/class="result"/g)||[]).length,40);assert.match(f.get('#near-address').innerHTML,/Vis flere adresser/);
+  const propertyHtml=f.get('#near-property').innerHTML,requests=f.requests.length;
+  f.more('address');assert.equal((f.get('#near-address').innerHTML.match(/class="result"/g)||[]).length,80);assert(!f.get('#near-address').innerHTML.includes('Vis flere adresser'));
+  assert.equal(f.get('#near-property').innerHTML,propertyHtml);assert.equal(f.requests.length,requests,'Showing more uses loaded results');
 });

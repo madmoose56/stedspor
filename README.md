@@ -5,12 +5,12 @@ Første PWA-versjon for iPhone. Åpne den publiserte HTTPS-adressen i Safari, og
 ## Funksjoner
 
 - Adressevalg med gate, nummer/bokstav, postnummer og poststed i Norge. Ett treff åpnes direkte; flere treff kan velges og hentes sidevis fra Kartverkets adresseregister.
-- GPS starter automatisk når appen åpnes, og kan oppdateres med Min posisjon til venstre. Velg adresse står til høyre. Posisjonstillatelse kreves; ved avslag er adresse og manuelle koordinater tilgjengelig. Ingen bakgrunnssporing.
+- GPS starter automatisk når appen åpnes, og kan oppdateres med Min posisjon til venstre. Velg adresse står til høyre. Posisjonstillatelse kreves; ved avslag er adresse tilgjengelig. Ingen bakgrunnssporing.
 - Nærmeste adresse merkes som nærmeste adresse, ikke som en bekreftet adresse for eiendommen ved punktet.
 - Kommune og fylke slås opp direkte fra punktet.
 - Gårds-, bruks-, feste- og seksjonsnummer fra Kartverkets eiendoms-API. Flere eiendommer ved samme punkt vises.
 - Verneområder fra Miljødirektoratet og kulturminnelokaliteter fra Riksantikvaren.
-- Samlet og kategorifiltrert liste, sortert etter avstand, innen 100 meter eller 1 kilometer. 1-kilometerlisten inkluderer også treffene innen 100 meter.
+- Separate felt for kulturminner, verneområder, eiendommer og adresser under I nærheten. Hvert felt viser treff innen 1 km, sortert etter luftlinjeavstand, med egen kildestatus og Vis flere.
 - Matrikkelen-kortet kan åpne GeoNorges eiendomskart teig som et kvadrat i full kortbredde og i full størrelse, med teiggrenser, grensepunkter og matrikkelnummer fra Matrikkelkart WMS.
 - Detaljer og lenker til originalkildene. Kulturminner kan være fjernet eller ikke synlige i terrenget.
 - Nettfeil vises per datakilde. Ingen oppdiktede eiernavn, signalverdier eller karttreff.
@@ -37,7 +37,7 @@ npm test
 npm run preview
 ```
 
-Åpne http://127.0.0.1:4188. GPS på en iPhone krever HTTPS, eller en egnet lokal utviklingsløsning. Hosting konfigureres i `.openai/hosting.json`.
+Åpne http://127.0.0.1:4188. GPS på en iPhone krever HTTPS, eller en egnet lokal utviklingsløsning. Manuell koordinatregistrering er fjernet fra grensesnittet. Hosting konfigureres i `.openai/hosting.json`.
 
 ## Senere native iOS med Capacitor
 

@@ -17,3 +17,5 @@ body{line-height:1.55}.card-head,.section-heading{flex-wrap:wrap}.card-head{gap:
 
 .cadastral-expand-control{background:white;border-radius:7px!important;overflow:hidden}.cadastral-expand-control button{border:0;background:white;color:var(--ink);font:600 .9375rem 'DM Sans',system-ui,sans-serif;line-height:1.25;min-height:52px;min-width:78px;padding:7px 9px;text-align:center}.cadastral-expand-control button:focus-visible{outline-offset:-4px}.cadastral-full-slot .cadastral-expand-control{display:none}
 .culture-map-marker{display:grid;place-items:center;background:#8c356e;color:#fff;border:2px solid #fff;border-radius:8px;box-shadow:0 2px 5px #0005;font:700 .875rem system-ui,sans-serif;white-space:nowrap}.culture-map-marker:focus-visible{outline:3px solid #173e34;outline-offset:3px}
+
+.near-title{font-size:1.25rem;line-height:1.4}.near-group .card-head{margin-bottom:8px}.near-group .caption{margin-bottom:12px}.near-group .result:last-child{border-bottom:0}.near-group+.near-group{margin-top:16px}
