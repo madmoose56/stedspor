@@ -2,6 +2,8 @@
 
 ## Ikke utgitt
 
+- Min posisjon starter automatisk ved åpning og står til venstre. Velg adresse står til høyre og avbryter et ventende GPS-oppslag. Naturtyper er fjernet fra datakilder, kartlag, kategorier og visninger.
+
 - Fjernet de to separate oversiktskortene for natur/verneområder og kulturminner over kartet. Kartlag og trefflisten i I nærheten beholdes.
 
 - Kulturminneoversikten angir 1 km fra valgt posisjon. Liste og kart bruker samme avgrensning; treff utenfor sirkelen utelates selv om de ligger innenfor søkets firkantede kartutsnitt.

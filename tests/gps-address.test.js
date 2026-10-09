@@ -12,22 +12,23 @@ class Element{
   querySelector(){return new Element();}querySelectorAll(){return [];}remove(){}focus(){}
   showModal(){this.open=true;}
 }
-function harness({addresses=[{...address,adressenavn:'Fjern gate',meterDistanseTilPunkt:250},address],failure=false,hold=false,cultureFeatures=[],leaflet,cultureFailure=false}={}){
+function harness({addresses=[{...address,adressenavn:'Fjern gate',meterDistanseTilPunkt:250},address],failure=false,hold=false,cultureFeatures=[],leaflet,cultureFailure=false,protectedFeatures=[],gpsAvailable=true}={}){
   const elements=new Map(),get=selector=>{if(['#nature-overview','#culture-overview'].includes(selector))return null;if(!elements.has(selector))elements.set(selector,new Element());return elements.get(selector);};
-  const callbacks=[],requests=[];let release;
+  const callbacks=[],requests=[],pageEvents=new Map();let release;
   const pending=hold?new Promise(resolve=>release=resolve):null;
   const context={URL,URLSearchParams,AbortController,AbortSignal,Date,Math,Number,Promise,setTimeout,clearTimeout,console,nearestAddressFields,geometryDistance,bounds,
-    addEventListener(){},window:{L:leaflet},L:leaflet,ResizeObserver:class{observe(){}},navigator:{geolocation:{getCurrentPosition(ok,error){callbacks.push({ok,error});}}},
-    document:{querySelector:get,querySelectorAll:()=>[],createElement:()=>new Element()},
+    addEventListener(name,fn){pageEvents.set(name,fn);},window:{L:leaflet},L:leaflet,ResizeObserver:class{observe(){}},navigator:{geolocation:gpsAvailable?{getCurrentPosition(ok,error){callbacks.push({ok,error});}}:undefined},
+    document:{readyState:'loading',querySelector:get,querySelectorAll:()=>[],createElement:()=>new Element()},
     fetch:async url=>{requests.push(String(url));let data={features:[],links:[],eiendom:[]};
       if(String(url).includes('/adresser/v1/punktsok')){if(failure)throw Error('Offline');if(pending)await pending;data={adresser:addresses,metadata:{totaltAntallTreff:addresses.length}};}
       if(String(url).includes('api.ra.no/')){if(cultureFailure)throw Error('Offline');data={features:cultureFeatures,links:[]};}
+      if(String(url).includes('/services/vern/'))data={features:protectedFeatures};
       return {ok:true,json:async()=>data};}
   };
   vm.runInNewContext(fs.readFileSync(new URL('../dist/app.js',import.meta.url),'utf8').replace(/^import .+;\r?\n/gm,''),context);
   for(const key of ['culture','protected','reserve'])get('#layer-'+key).checked=true;
   for(const [selector,value] of [['#search-street','Tidligere gate'],['#search-number','9'],['#search-postcode','0001'],['#search-place','Tidligere sted']])get(selector).value=value;
-  return {get,requests,callbacks,release,showAllNearby(){vm.runInNewContext('state.radius=1000;renderNear();',context);},toggleCulture(enabled){get('#layer-culture').checked=enabled;context.updateMapLayers();},start(){get('#locate').onclick();},position(){return callbacks.at(-1).ok({coords:{longitude:10.7387,latitude:59.9075,accuracy:8}});}};
+  return {get,requests,callbacks,release,open(){pageEvents.get('DOMContentLoaded')();},showAllNearby(){vm.runInNewContext('state.radius=1000;renderNear();',context);},toggleCulture(enabled){get('#layer-culture').checked=enabled;context.updateMapLayers();},start(){get('#locate').onclick();},position(){return callbacks.at(-1).ok({coords:{longitude:10.7387,latitude:59.9075,accuracy:8}});}};
 }
 const values=fixture=>['#search-street','#search-number','#search-postcode','#search-place'].map(id=>fixture.get(id).value);
 
@@ -128,4 +129,34 @@ test('Culture lookup keeps only sites within the 1 km circle, including at the b
   for(const title of ['Utenfor grensen','Utenfor i kartutsnittets hjørne','Ukjent plassering'])assert(!overview.includes(title));
   const group=map.groups.find(g=>g.layers.some(l=>l.kind==='marker'));
   assert.deepEqual(group.layers.filter(l=>l.kind==='marker').map(m=>m.options.title),['K1 · Nært kulturminne','K2 · Innenfor grensen']);
+});
+
+test('Opening the app starts GPS once, fills its address and loads protected areas without querying nature types',async()=>{
+  const protectedFeature={geometry:{type:'Point',coordinates:[10.7387,59.9075]},properties:{OBJECTID:7,offisieltNavn:'Eksempelreservat',verneform:'NR'}};
+  const f=harness({protectedFeatures:[protectedFeature]});f.open();f.open();
+  assert.equal(f.callbacks.length,1);assert.equal(f.get('#locate').attributes['aria-pressed'],'true');assert.equal(f.get('#choose-address').attributes['aria-pressed'],'false');
+  await f.position();assert.deepEqual(values(f),['Myntgata','3A','0151','OSLO']);assert.equal(f.get('#locate').disabled,false);
+  assert.equal(f.requests.length,5);assert(f.requests.some(url=>url.includes('/services/vern/')));assert(!f.requests.some(url=>/naturtype/i.test(url)));
+  assert(f.get('#here-content').innerHTML.includes('Eksempelreservat'));assert(!/naturtype/i.test(f.get('#here-content').innerHTML+f.get('#source-status').innerHTML));
+});
+test('Choosing an address cancels an automatic GPS callback before it can submit the old position',async()=>{
+  const f=harness();f.open();f.get('#choose-address').onclick();await f.position();
+  assert.equal(f.requests.length,0);assert.equal(f.get('#locate').disabled,false);assert.equal(f.get('#locate').attributes['aria-pressed'],'false');
+  assert.equal(f.get('#choose-address').attributes['aria-pressed'],'true');assert.equal(f.get('#address-panel').hidden,false);assert.equal(f.get('#search-address').hidden,false);
+});
+test('A manual address choice before startup is respected',()=>{
+  const f=harness();f.get('#choose-address').onclick();f.open();assert.equal(f.callbacks.length,0);assert.equal(f.get('#address-panel').hidden,false);
+});
+test('Automatic startup keeps manual address selection available when GPS is unavailable or denied',()=>{
+  for(const available of [true,false]){
+    const f=harness({gpsAvailable:available});f.open();if(available)f.callbacks[0].error({code:1});
+    assert.equal(f.requests.length,0);assert.equal(f.get('#locate').disabled,false);assert.equal(f.get('#notice').hidden,false);assert.equal(f.get('#position-label').textContent,'Velg adresse eller min posisjon');
+    f.get('#choose-address').onclick();assert.equal(f.get('#address-panel').hidden,false);assert.equal(f.get('#search-address').hidden,false);
+  }
+});
+
+test('Choosing an address during automatic data loading prevents late GPS address autofill',async()=>{
+  const f=harness({hold:true});f.open();const lookup=f.position();f.get('#choose-address').onclick();
+  f.get('#search-street').value='Manuell gate';f.release();await lookup;
+  assert.deepEqual(values(f),['Manuell gate','9','0001','Tidligere sted']);assert.equal(f.get('#locate').disabled,false);assert.equal(f.get('#search-address').hidden,false);
 });

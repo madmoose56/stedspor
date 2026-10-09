@@ -5,11 +5,11 @@ Første PWA-versjon for iPhone. Åpne den publiserte HTTPS-adressen i Safari, og
 ## Funksjoner
 
 - Adressevalg med gate, nummer/bokstav, postnummer og poststed i Norge. Ett treff åpnes direkte; flere treff kan velges og hentes sidevis fra Kartverkets adresseregister.
-- GPS ved aktiv knappetrykk, eller manuelt koordinatpunkt. Ingen bakgrunnssporing.
+- GPS starter automatisk når appen åpnes, og kan oppdateres med Min posisjon til venstre. Velg adresse står til høyre. Posisjonstillatelse kreves; ved avslag er adresse og manuelle koordinater tilgjengelig. Ingen bakgrunnssporing.
 - Nærmeste adresse merkes som nærmeste adresse, ikke som en bekreftet adresse for eiendommen ved punktet.
 - Kommune og fylke slås opp direkte fra punktet.
 - Gårds-, bruks-, feste- og seksjonsnummer fra Kartverkets eiendoms-API. Flere eiendommer ved samme punkt vises.
-- Kartlagte naturtyper etter Miljødirektoratets instruks, verneområder og kulturminnelokaliteter fra Riksantikvaren.
+- Verneområder fra Miljødirektoratet og kulturminnelokaliteter fra Riksantikvaren.
 - Samlet og kategorifiltrert liste, sortert etter avstand, innen 100 meter eller 1 kilometer. 1-kilometerlisten inkluderer også treffene innen 100 meter.
 - Matrikkelen-kortet kan åpne GeoNorges eiendomskart teig som et kvadrat i full kortbredde og i full størrelse, med teiggrenser, grensepunkter og matrikkelnummer fra Matrikkelkart WMS.
 - Detaljer og lenker til originalkildene. Kulturminner kan være fjernet eller ikke synlige i terrenget.
@@ -22,9 +22,9 @@ Eier er **ikke automatisk hentet**. Lenken til [Eiendomsregisteret](https://eien
 
 Mobilnett vises med lenker til Telenor, Telia og ice. Dekning og signalstyrke ved punktet er **ikke integrert**. Avtal en georeferert dekningsdatatjeneste og merk beregnede verdier tydelig. Apple beskriver manglende offentlig signalstyrke-API i [utviklerforumet](https://developer.apple.com/forums/thread/113534). Dette løses ikke automatisk ved native konvertering.
 
-Avstander for eiendom bruker API-feltet `meterFraPunkt`; adresser bruker `meterDistanseTilPunkt`. Natur og kulturminner beregnes til nærmeste del av geometri, med 0 meter ved overlapp. Beregningen bruker lokal meterprojeksjon og er omtrentlig. Matrikkelgrenser og GPS kan være upresise. Dette er en oppslagsapp, ikke dokumentasjon av rettslige grenser.
+Avstander for eiendom bruker API-feltet `meterFraPunkt`; adresser bruker `meterDistanseTilPunkt`. Verneområder og kulturminner beregnes til nærmeste del av geometri, med 0 meter ved overlapp. Beregningen bruker lokal meterprojeksjon og er omtrentlig. Matrikkelgrenser og GPS kan være upresise. Dette er en oppslagsapp, ikke dokumentasjon av rettslige grenser.
 
-Kartet nederst kan flyttes og zoomes. Det viser valgt punkt, ringer på 100 m og 1 km, eiendomsgrenser fra Kartverkets WMS og polygoner for naturtyper og verneområder innen 1 km. Naturreservater og øvrige verneområder kan slås av og på hver for seg. Oppsummeringene har tre atskilte avstandsgrupper uten dobbelttelling. Naturtypelaget er ikke en fullstendig klassifikasjon av all natur eller arealdekke.
+Kartet nederst kan flyttes og zoomes. Det viser valgt punkt, ringer på 100 m og 1 km, verneområder og kulturminner innen 1 km. Naturreservater og øvrige verneområder kan slås av og på hver for seg. Kulturminner merkes K1, K2 osv. med samme nummer i trefflisten under I nærheten.
 
 Offentlige kilder hentes direkte fra nettleseren. CORS, API-endringer og nedetid kan påvirke oppslag. For en produksjonsapp med eier- og dekningsavtaler bør det etableres en backend med hemmeligheter på serveren, validerte datakontrakter, overvåking og avtalt oppdatering.
 
@@ -53,13 +53,13 @@ npx cap sync ios
 npx cap open ios
 ```
 
-Velg et endelig app-ID før du oppretter plattformen. Legg til en beskrivende `NSLocationWhenInUseUsageDescription` i iOS Info.plist, for eksempel «Stedspor bruker posisjonen din for å finne eiendom, natur og kulturminner i nærheten». Test posisjonstillatelser, CORS fra native origin, eksterne lenker og GPS på fysisk enhet. Ved behov erstattes nettleserens GPS-kall med Capacitors Geolocation-plugin. Service worker støttes ikke nødvendigvis i native WKWebView; appfilene leveres da lokalt av Capacitor.
+Velg et endelig app-ID før du oppretter plattformen. Legg til en beskrivende `NSLocationWhenInUseUsageDescription` i iOS Info.plist, for eksempel «Stedspor bruker posisjonen din for å finne eiendom, verneområder og kulturminner i nærheten». Test posisjonstillatelser, CORS fra native origin, eksterne lenker og GPS på fysisk enhet. Ved behov erstattes nettleserens GPS-kall med Capacitors Geolocation-plugin. Service worker støttes ikke nødvendigvis i native WKWebView; appfilene leveres da lokalt av Capacitor.
 
 ## Datakilder
 
 - [Kartverket eiendom API](https://api.kartverket.no/eiendom/v1/) – CC BY 4.0.
 - [Kartverket adresse API](https://ws.geonorge.no/adresser/v1/) og [kommuneinfo](https://ws.geonorge.no/kommuneinfo/v1/).
-- [Miljødirektoratet vern](https://kart.miljodirektoratet.no/arcgis/rest/services/vern/MapServer) og [naturtyper NiN](https://kart.miljodirektoratet.no/arcgis/rest/services/naturtyper_nin/MapServer) – NLOD.
+- [Miljødirektoratet vern](https://kart.miljodirektoratet.no/arcgis/rest/services/vern/MapServer) – NLOD.
 - [Riksantikvaren lokaliteter](https://api.ra.no/LokaliteterEnkeltminnerOgSikringssoner) – NLOD. Områder uten geometri utelates eksplisitt med CQL-filter.
 - [Kartverket bakgrunnskart](https://cache.kartverket.no/) og [matrikkel-WMS](https://wms.geonorge.no/skwms1/wms.matrikkel?service=WMS&request=GetCapabilities). Kartbilder lagres ikke uten nett. Leaflet 1.9.4 ligger lokalt i dist/vendor med lisens.
 
