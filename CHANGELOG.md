@@ -2,6 +2,8 @@
 
 ## Ikke utgitt
 
+- Tema 20: Befolkning og områdestatistikk med kommunens folketall, tetthet, areal, landareal, årlig endring og fem siste årganger fra SSB. År, geografisk nivå og kilder vises; manglende tall og oppslagsfeil håndteres uten å vise gamle tall for et nytt sted.
+
 - Nytt tema Arealplaner og regulering: planoppstart fra DiBK og kommunale planområder/arealformål fra Bergen, med kartlag, 1 km-avgrensning, plan-ID, status, kildelenker og tydelig dekning/feil per kilde.
 
 - Fjernet Velg sted uten GPS og den samlede Rundt deg-listen. I nærheten viser kulturminner, verneområder, eiendommer og adresser i hvert sitt felt innen 1 km, med uavhengig kildestatus og Vis flere.

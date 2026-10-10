@@ -4,6 +4,8 @@ Første PWA-versjon for iPhone. Åpne den publiserte HTTPS-adressen i Safari, og
 
 ## Funksjoner
 
+- Tema 20: Befolkning og områdestatistikk under Her står jeg. Kommunens folketall per 1. januar, befolkningstetthet, areal, landareal og de fem siste årgangene fra SSB tabell 11342 via PxWebApi v2. Oppgis med år og kildelenke. Manglende historiske tall vises som –; årlig endring beregnes bare mellom to påfølgende år med tilgjengelige folketall. Kun kommunenummer sendes til SSB.
+
 - Arealplaner og regulering: planoppstart fra DiBK og vedtatte planområder/arealformål på grunnen fra Bergen kommunes åpne karttjeneste, innen 1 km. Kartlag, plan-ID, status, formålskode og kildelenker. Kommunal dekning er foreløpig Bergen; manglende kilder vises tydelig.
 
 - Adressevalg med gate, nummer/bokstav, postnummer og poststed i Norge. Ett treff åpnes direkte; flere treff kan velges og hentes sidevis fra Kartverkets adresseregister.
@@ -58,6 +60,8 @@ npx cap open ios
 Velg et endelig app-ID før du oppretter plattformen. Legg til en beskrivende `NSLocationWhenInUseUsageDescription` i iOS Info.plist, for eksempel «Stedspor bruker posisjonen din for å finne eiendom, verneområder og kulturminner i nærheten». Test posisjonstillatelser, CORS fra native origin, eksterne lenker og GPS på fysisk enhet. Ved behov erstattes nettleserens GPS-kall med Capacitors Geolocation-plugin. Service worker støttes ikke nødvendigvis i native WKWebView; appfilene leveres da lokalt av Capacitor.
 
 ## Datakilder
+
+- [SSB tabell 11342](https://www.ssb.no/statbank/table/11342/) – areal og befolkning i kommuner. [PxWebApi v2](https://www.ssb.no/api/pxwebapiv2), CC BY 4.0. Nyeste fem år hentes dynamisk. Kommunetall gjelder hovedlandet; uten dekning vises kildestatus.
 
 - [Kartverket eiendom API](https://api.kartverket.no/eiendom/v1/) – CC BY 4.0.
 - [Kartverket adresse API](https://ws.geonorge.no/adresser/v1/) og [kommuneinfo](https://ws.geonorge.no/kommuneinfo/v1/).

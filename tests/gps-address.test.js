@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import {nearestAddressFields} from '../dist/address-search.js';
 import {geometryDistance,bounds} from '../dist/geo.js';
+import {loadPopulation,populationSource} from '../dist/population.js';
 import {loadPlans} from '../dist/plans.js';
 
 const address={adressenavn:'Myntgata',nummer:3,bokstav:'a',postnummer:'0151',poststed:'OSLO',adressetekst:'Myntgata 3A',kommunenummer:'0301',adressekode:123,meterDistanseTilPunkt:30};
@@ -13,11 +14,11 @@ class Element{
   querySelector(){return new Element();}querySelectorAll(){return [];}remove(){}focus(){}
   showModal(){this.open=true;}
 }
-function harness({addresses=[{...address,adressenavn:'Fjern gate',meterDistanseTilPunkt:250},address],failure=false,hold=false,cultureFeatures=[],leaflet,cultureFailure=false,protectedFeatures=[],gpsAvailable=true,properties=[],planFeatures=[],planFailure=false}={}){
+function harness({addresses=[{...address,adressenavn:'Fjern gate',meterDistanseTilPunkt:250},address],failure=false,hold=false,cultureFeatures=[],leaflet,cultureFailure=false,protectedFeatures=[],gpsAvailable=true,properties=[],planFeatures=[],planFailure=false,municipality=null,ssbDataset=null,ssbFailure=false}={}){
   const elements=new Map(),get=selector=>{if(['#nature-overview','#culture-overview','#coordinates','#example','#latitude','#longitude','#results','#source-status','#more'].includes(selector))return null;if(!elements.has(selector))elements.set(selector,new Element());return elements.get(selector);};
   const callbacks=[],requests=[],pageEvents=new Map();let release;
   const pending=hold?new Promise(resolve=>release=resolve):null;
-  const context={URL,URLSearchParams,AbortController,AbortSignal,Date,Math,Number,Promise,setTimeout,clearTimeout,console,nearestAddressFields,geometryDistance,bounds,loadPlans,
+  const context={URL,URLSearchParams,AbortController,AbortSignal,Date,Math,Number,Promise,setTimeout,clearTimeout,console,nearestAddressFields,geometryDistance,bounds,loadPlans,loadPopulation,populationSource,
     addEventListener(name,fn){pageEvents.set(name,fn);},window:{L:leaflet},L:leaflet,ResizeObserver:class{observe(){}},navigator:{geolocation:gpsAvailable?{getCurrentPosition(ok,error){callbacks.push({ok,error});}}:undefined},
     document:{readyState:'loading',querySelector:get,querySelectorAll:()=>[],createElement:()=>new Element()},
     fetch:async url=>{requests.push(String(url));let data={features:[],links:[],eiendom:[]};
@@ -26,6 +27,8 @@ function harness({addresses=[{...address,adressenavn:'Fjern gate',meterDistanseT
       if(String(url).includes('/services/vern/'))data={features:protectedFeatures};
       if(String(url).includes('/eiendom/v1/punkt'))data={eiendom:properties,metadata:{totaltAntallTreff:properties.length}};
       if(String(url).includes('plandata.ft.dibk.no')){if(planFailure)throw Error('Offline');data={features:planFeatures,links:[]};}
+      if(String(url).includes('/kommuneinfo/v1/punkt'))data=municipality||{};
+      if(String(url).includes('data.ssb.no/')){if(ssbFailure)throw Error('Offline');data=ssbDataset;}
       return {ok:true,json:async()=>data};}
   };
   vm.runInNewContext(fs.readFileSync(new URL('../dist/app.js',import.meta.url),'utf8').replace(/^import .+;\r?\n/gm,''),context);
@@ -186,4 +189,22 @@ test('Planning appears in its own nearby field, the point card, the map and the 
 });
 test('Planning source errors are shown as incomplete data rather than an empty success',async()=>{
   const map=fakeLeaflet(),f=harness({planFailure:true,leaflet:map.L});f.open();await f.position();assert.match(f.get('#near-plan').innerHTML,/ufullstendig/);assert.match(f.get('#near-plan').innerHTML,/kunne ikke hentes/);assert(!f.get('#near-plan').innerHTML.includes('0 treff'));assert.match(f.get('#map-errors').textContent,/Plandata er ufullstendige/);
+});
+
+const ssbPopulation={class:'dataset',id:['Region','ContentsCode','Tid'],size:[1,4,2],dimension:{Region:{category:{index:{'0301':0}}},ContentsCode:{category:{index:{Folkemengde:0,ArealKm2:1,LandArealKm2:2,FolkeLandArealKm2:3}}},Tid:{category:{index:{2025:0,2026:1}}}},value:[724290,728714,454,454,426,426,1699,1709],updated:'2026-02-27T07:00:00Z'};
+test('Population topic uses the municipality of the selected point and renders SSB year and geographical scope',async()=>{
+  const f=harness({municipality:{kommunenummer:'0301',kommunenavn:'Oslo',fylkesnavn:'Oslo'},ssbDataset:ssbPopulation});
+  f.open();await f.position();
+  const request=f.requests.find(url=>url.includes('data.ssb.no/'));
+  assert(request);assert.equal(new URL(request).searchParams.get('valueCodes[Region]'),'0301');
+  const html=f.get('#population-theme').innerHTML;
+  assert.match(html,/20. Befolkning og områdestatistikk/);assert.match(html,/Oslo kommune/);
+  assert.match(html,/hele kommunen/);assert.match(html,/Per 1. januar 2026/);
+  assert.match(html,/728\D714/);assert.match(html,/tabell 11342/);assert(!html.includes('Henter kommunestatistikk'));
+});
+test('Population errors show a source failure without displaying invented residents',async()=>{
+  const f=harness({municipality:{kommunenummer:'0301',kommunenavn:'Oslo'},ssbFailure:true});
+  f.open();await f.position();
+  const html=f.get('#population-theme').innerHTML;
+  assert.match(html,/Kunne ikke hente statistikk fra SSB/);assert(!html.includes('population-metrics'));assert(!html.includes('0 innbyggere'));
 });
