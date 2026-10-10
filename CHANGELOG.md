@@ -2,6 +2,8 @@
 
 ## Ikke utgitt
 
+- Nytt tema Arealplaner og regulering: planoppstart fra DiBK og kommunale planområder/arealformål fra Bergen, med kartlag, 1 km-avgrensning, plan-ID, status, kildelenker og tydelig dekning/feil per kilde.
+
 - Fjernet Velg sted uten GPS og den samlede Rundt deg-listen. I nærheten viser kulturminner, verneområder, eiendommer og adresser i hvert sitt felt innen 1 km, med uavhengig kildestatus og Vis flere.
 
 - Min posisjon starter automatisk ved åpning og står til venstre. Velg adresse står til høyre og avbryter et ventende GPS-oppslag. Naturtyper er fjernet fra datakilder, kartlag, kategorier og visninger.

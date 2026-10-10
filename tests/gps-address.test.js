@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import {nearestAddressFields} from '../dist/address-search.js';
 import {geometryDistance,bounds} from '../dist/geo.js';
+import {loadPlans} from '../dist/plans.js';
 
 const address={adressenavn:'Myntgata',nummer:3,bokstav:'a',postnummer:'0151',poststed:'OSLO',adressetekst:'Myntgata 3A',kommunenummer:'0301',adressekode:123,meterDistanseTilPunkt:30};
 class Element{
@@ -12,11 +13,11 @@ class Element{
   querySelector(){return new Element();}querySelectorAll(){return [];}remove(){}focus(){}
   showModal(){this.open=true;}
 }
-function harness({addresses=[{...address,adressenavn:'Fjern gate',meterDistanseTilPunkt:250},address],failure=false,hold=false,cultureFeatures=[],leaflet,cultureFailure=false,protectedFeatures=[],gpsAvailable=true,properties=[]}={}){
+function harness({addresses=[{...address,adressenavn:'Fjern gate',meterDistanseTilPunkt:250},address],failure=false,hold=false,cultureFeatures=[],leaflet,cultureFailure=false,protectedFeatures=[],gpsAvailable=true,properties=[],planFeatures=[],planFailure=false}={}){
   const elements=new Map(),get=selector=>{if(['#nature-overview','#culture-overview','#coordinates','#example','#latitude','#longitude','#results','#source-status','#more'].includes(selector))return null;if(!elements.has(selector))elements.set(selector,new Element());return elements.get(selector);};
   const callbacks=[],requests=[],pageEvents=new Map();let release;
   const pending=hold?new Promise(resolve=>release=resolve):null;
-  const context={URL,URLSearchParams,AbortController,AbortSignal,Date,Math,Number,Promise,setTimeout,clearTimeout,console,nearestAddressFields,geometryDistance,bounds,
+  const context={URL,URLSearchParams,AbortController,AbortSignal,Date,Math,Number,Promise,setTimeout,clearTimeout,console,nearestAddressFields,geometryDistance,bounds,loadPlans,
     addEventListener(name,fn){pageEvents.set(name,fn);},window:{L:leaflet},L:leaflet,ResizeObserver:class{observe(){}},navigator:{geolocation:gpsAvailable?{getCurrentPosition(ok,error){callbacks.push({ok,error});}}:undefined},
     document:{readyState:'loading',querySelector:get,querySelectorAll:()=>[],createElement:()=>new Element()},
     fetch:async url=>{requests.push(String(url));let data={features:[],links:[],eiendom:[]};
@@ -24,10 +25,11 @@ function harness({addresses=[{...address,adressenavn:'Fjern gate',meterDistanseT
       if(String(url).includes('api.ra.no/')){if(cultureFailure)throw Error('Offline');data={features:cultureFeatures,links:[]};}
       if(String(url).includes('/services/vern/'))data={features:protectedFeatures};
       if(String(url).includes('/eiendom/v1/punkt'))data={eiendom:properties,metadata:{totaltAntallTreff:properties.length}};
+      if(String(url).includes('plandata.ft.dibk.no')){if(planFailure)throw Error('Offline');data={features:planFeatures,links:[]};}
       return {ok:true,json:async()=>data};}
   };
   vm.runInNewContext(fs.readFileSync(new URL('../dist/app.js',import.meta.url),'utf8').replace(/^import .+;\r?\n/gm,''),context);
-  for(const key of ['culture','protected','reserve'])get('#layer-'+key).checked=true;
+  for(const key of ['culture','protected','reserve','plan'])get('#layer-'+key).checked=true;
   for(const [selector,value] of [['#search-street','Tidligere gate'],['#search-number','9'],['#search-postcode','0001'],['#search-place','Tidligere sted']])get(selector).value=value;
   return {get,requests,callbacks,release,open(){pageEvents.get('DOMContentLoaded')();},showAllNearby(){context.renderNear();},more(type){context.showMoreNearby(type);},chooseAddress(data){return context.chooseAddress(data);},toggleCulture(enabled){get('#layer-culture').checked=enabled;context.updateMapLayers();},start(){get('#locate').onclick();},position(){return callbacks.at(-1).ok({coords:{longitude:10.7387,latitude:59.9075,accuracy:8}});}};
 }
@@ -137,7 +139,7 @@ test('Opening the app starts GPS once, fills its address and loads protected are
   const f=harness({protectedFeatures:[protectedFeature]});f.open();f.open();
   assert.equal(f.callbacks.length,1);assert.equal(f.get('#locate').attributes['aria-pressed'],'true');assert.equal(f.get('#choose-address').attributes['aria-pressed'],'false');
   await f.position();assert.deepEqual(values(f),['Myntgata','3A','0151','OSLO']);assert.equal(f.get('#locate').disabled,false);
-  assert.equal(f.requests.length,5);assert(f.requests.some(url=>url.includes('/services/vern/')));assert(!f.requests.some(url=>/naturtype/i.test(url)));
+  assert.equal(f.requests.length,6);assert(f.requests.some(url=>url.includes('/services/vern/')));assert(!f.requests.some(url=>/naturtype/i.test(url)));
   assert(f.get('#here-content').innerHTML.includes('Eksempelreservat'));assert(!/naturtype/i.test(f.get('#here-content').innerHTML+f.get('#near-protected').innerHTML));
 });
 test('Choosing an address cancels an automatic GPS callback before it can submit the old position',async()=>{
@@ -175,4 +177,13 @@ test('Nearby cards keep categories and their errors separate, with independent p
   const propertyHtml=f.get('#near-property').innerHTML,requests=f.requests.length;
   f.more('address');assert.equal((f.get('#near-address').innerHTML.match(/class="result"/g)||[]).length,80);assert(!f.get('#near-address').innerHTML.includes('Vis flere adresser'));
   assert.equal(f.get('#near-property').innerHTML,propertyHtml);assert.equal(f.requests.length,requests,'Showing more uses loaded results');
+});
+
+test('Planning appears in its own nearby field, the point card, the map and the correct detail dialog',async()=>{
+  const map=fakeLeaflet(),f=harness({leaflet:map.L,planFeatures:[{id:1,geometry:{type:'Point',coordinates:[10.7387,59.9075]},properties:{plannavn:'Testplan',nasjonalArealplanId:{planid:'0009',kommunenummer:'0301'},plantype:'Detaljregulering'}}]});f.open();await f.position();
+  assert.match(f.get('#near-plan').innerHTML,/Testplan/);assert.match(f.get('#near-plan').innerHTML,/foreløpig tilgjengelig for Bergen/);assert.match(f.get('#here-content').innerHTML,/AREALPLANER OG REGULERING/);
+  const layer=map.groups.find(group=>group.layers.some(layer=>layer.tooltip==='Testplan'));assert(layer);layer.layers[0].events.click();assert.match(f.get('#detail-content').innerHTML,/0009/);assert.match(f.get('#detail-content').innerHTML,/Planlegging igangsatt/);assert.match(f.get('#detail-content').innerHTML,/Ikke oppgitt i denne kilden/);
+});
+test('Planning source errors are shown as incomplete data rather than an empty success',async()=>{
+  const map=fakeLeaflet(),f=harness({planFailure:true,leaflet:map.L});f.open();await f.position();assert.match(f.get('#near-plan').innerHTML,/ufullstendig/);assert.match(f.get('#near-plan').innerHTML,/kunne ikke hentes/);assert(!f.get('#near-plan').innerHTML.includes('0 treff'));assert.match(f.get('#map-errors').textContent,/Plandata er ufullstendige/);
 });

@@ -19,3 +19,5 @@ body{line-height:1.55}.card-head,.section-heading{flex-wrap:wrap}.card-head{gap:
 .culture-map-marker{display:grid;place-items:center;background:#8c356e;color:#fff;border:2px solid #fff;border-radius:8px;box-shadow:0 2px 5px #0005;font:700 .875rem system-ui,sans-serif;white-space:nowrap}.culture-map-marker:focus-visible{outline:3px solid #173e34;outline-offset:3px}
 
 .near-title{font-size:1.25rem;line-height:1.4}.near-group .card-head{margin-bottom:8px}.near-group .caption{margin-bottom:12px}.near-group .result:last-child{border-bottom:0}.near-group+.near-group{margin-top:16px}
+
+.result-icon.plan{background:#e7edf5;color:#276e98}.plan-coverage{margin:12px 0;border-left:3px solid var(--line);padding-left:12px}.plan-coverage p{margin-bottom:7px}.plan-coverage a{margin-top:0}.plan-coverage .caption{margin-top:10px}

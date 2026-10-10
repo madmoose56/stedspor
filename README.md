@@ -4,6 +4,8 @@ Første PWA-versjon for iPhone. Åpne den publiserte HTTPS-adressen i Safari, og
 
 ## Funksjoner
 
+- Arealplaner og regulering: planoppstart fra DiBK og vedtatte planområder/arealformål på grunnen fra Bergen kommunes åpne karttjeneste, innen 1 km. Kartlag, plan-ID, status, formålskode og kildelenker. Kommunal dekning er foreløpig Bergen; manglende kilder vises tydelig.
+
 - Adressevalg med gate, nummer/bokstav, postnummer og poststed i Norge. Ett treff åpnes direkte; flere treff kan velges og hentes sidevis fra Kartverkets adresseregister.
 - GPS starter automatisk når appen åpnes, og kan oppdateres med Min posisjon til venstre. Velg adresse står til høyre. Posisjonstillatelse kreves; ved avslag er adresse tilgjengelig. Ingen bakgrunnssporing.
 - Nærmeste adresse merkes som nærmeste adresse, ikke som en bekreftet adresse for eiendommen ved punktet.
